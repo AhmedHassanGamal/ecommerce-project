@@ -1,14 +1,20 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
-const databasee = () => {
-    mongoose.connect(process.env.MONGO_URI)
-        .then((conn) => {
-            console.log(`Connected to the database: ${conn.connection.host}`);
-        })
-        .catch((err) => {
-            console.log(`DB connection error: ${err}`);
-            process.exit(1);
-        });
+// تحميل المتغيرات من ملف البيئة
+dotenv.config({ path: 'config.env' });
+
+const databaseConnect = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Database connected successfully');
+  } catch (error) {
+    console.error('Database connection error:', error);
+    process.exit(1); // إنهاء العملية إذا فشل الاتصال بقاعدة البيانات
+  }
 };
 
-module.exports = databasee;
+module.exports = databaseConnect;

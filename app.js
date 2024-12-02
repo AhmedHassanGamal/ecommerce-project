@@ -4,38 +4,37 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const databaseConnect = require('./config/db');
 
-// Load environment variables
+// تحميل المتغيرات من ملف البيئة
 dotenv.config({ path: 'config.env' });
 
-// Initialize Express app
+// إنشاء تطبيق Express
 const app = express();
 
-// Connect to the database
+// الاتصال بقاعدة البيانات
 databaseConnect();
 
 // Middleware
-app.use(express.json()); // Parse JSON request bodies
-app.use(cors()); // Enable CORS for cross-origin requests
-app.use('/uploads', express.static('uploads')); // Serve static files from 'uploads' folder
+app.use(express.json()); // تحويل الطلبات من نوع JSON
+app.use(cors()); // تمكين CORS
+app.use('/uploads', express.static('uploads')); // خدمة الملفات الثابتة من مجلد 'uploads'
 
+// تحميل المسارات
 const authRoutes = require('./routes/authRoutes');
-// const categoryRoutes = require('./routes/adm');
-// const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// Use Routes
+// استخدام المسارات
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/admin', adminRoutes);
 
-// Error Handling Middleware (Optional, for better debugging)
+// Middleware لمعالجة الأخطاء
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
-// Start the server
+// بدء الخادم
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
