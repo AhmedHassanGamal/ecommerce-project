@@ -2,23 +2,30 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// Register
 exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, type } = req.body;
 
   try {
+    // Validate type
+    if (!["user", "admin"].includes(type)) {
+      return res.status(400).json({ error: "Invalid user type. Must be 'user' or 'admin'." });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, email, password: hashedPassword });
+    const newUser = new User({ username, email, password: hashedPassword, type });
     await newUser.save();
 
     const userResponse = {
       id: newUser._id,
       username: newUser.username,
       email: newUser.email,
+      type: newUser.type,
     };
 
     res.status(201).json({
@@ -31,7 +38,6 @@ exports.register = async (req, res) => {
   }
 };
 
-
 // User Login
 exports.login = async (req, res) => {
   const { email, password } = req.body;
@@ -41,19 +47,16 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid == password) {
-      return res.status(400).json({
-        status: "failed",
-        msg: "Password is incorrect",
-      });
+    if (!isPasswordValid ==0) {
+      return res.status(400).json({ error: "Incorrect password" });
     }
+
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, type: user.type },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h", 
-      }
+      { expiresIn: "1h" }
     );
 
     res.status(200).json({
@@ -63,6 +66,7 @@ exports.login = async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        type: user.type,
       },
     });
   } catch (error) {

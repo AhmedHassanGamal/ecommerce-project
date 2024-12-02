@@ -2,7 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const databasee=require("./config/db")
+const databaseConnect = require('./config/db');
+
 // Load environment variables
 dotenv.config({ path: 'config.env' });
 
@@ -10,29 +11,32 @@ dotenv.config({ path: 'config.env' });
 const app = express();
 
 // Connect to the database
-databasee();
+databaseConnect();
 
 // Middleware
-app.use(express.json()); // For parsing JSON bodies
-app.use(cors()); // For handling cross-origin requests
-// image upload
-app.use('/uploads', express.static('uploads'));
-// Import Routes
+app.use(express.json()); // Parse JSON request bodies
+app.use(cors()); // Enable CORS for cross-origin requests
+app.use('/uploads', express.static('uploads')); // Serve static files from 'uploads' folder
+
 const authRoutes = require('./routes/authRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const productRoutes = require('./routes/productRoutes');
-const userRoutes = require("./routes/userRoutes");
-const adminRoutes= require('./routes/adminRoutes')
-;
-// Route Middleware
+// const categoryRoutes = require('./routes/adm');
+// const productRoutes = require('./routes/productRoutes');
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
+// Use Routes
 app.use('/auth', authRoutes);
-app.use('/categories', categoryRoutes);
-app.use('/products', productRoutes);
-app.use("/users", userRoutes);
-app.use('/admin',adminRoutes);
+app.use('/users', userRoutes);
+app.use('/admin', adminRoutes);
+
+// Error Handling Middleware (Optional, for better debugging)
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });

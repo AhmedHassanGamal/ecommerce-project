@@ -1,20 +1,27 @@
 const express = require('express');
-// const adminController = require('../controllers/adminController');
-const authh = require('../middlewares/authMiddleware');
+const adminController = require('../controllers/adminController');
+
 const router = express.Router();
-const{
-    login,
-    addAdmin,
-    updateAdmin,
-    deleteAdmin,
-    getAllAdmins,
-    getAdminById
-} =require('../controllers/adminController');
-router.post('/login', login);
-router.post('/', authh, addAdmin);
-router.put('/:id', authh, updateAdmin);
-router.delete('/:id', authh, deleteAdmin);
-router.get('/', authh, getAllAdmins);
-router.get('/:id', authh, getAdminById);
+
+// Routes for Categories
+router.get('/categories', adminController.getCategories);
+router.post('/categories', adminController.addCategory);
+router.get('/categories/:id', adminController.getCategoryById);
+router.put('/categories/:id', adminController.updateCategory);
+router.delete('/categories/:id', adminController.deleteCategory);
+
+// Routes for Products
+router.get('/products', adminController.getProducts);
+router.get('/products/:id', adminController.getProductById);
+router.post('/products', adminController.addProduct);
+router.put('/products/:id', adminController.updateProduct);
+router.delete('/products/:id', adminController.deleteProduct);
+
+// Routes for Users
+router.get('/users', adminController.getUsers);
+router.delete('/users/:id', adminController.deleteUser);
+router.put('/users/:id', adminController.updateUser);
+router.get('/users/:id', adminController.getUserById);
+
 
 module.exports = router;
