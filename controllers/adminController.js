@@ -4,7 +4,6 @@ const multer = require("multer");
 const path = require("path");
 const Category = require('../models/Category');
 
-// إدارة الفئات (Categories)
 exports.addCategory = async (req, res) => {
     const { name, subcategories } = req.body;
     try {
