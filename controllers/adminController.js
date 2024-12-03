@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const multer = require("multer");
 const path = require("path");
 const Category = require('../models/Category');
+const sendMail = require("../utlis/mailer");
 
 exports.addCategory = async (req, res) => {
     const { name, subcategories } = req.body;
@@ -65,71 +66,76 @@ exports.deleteCategory = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete category' });
     }
 };
-
+// Add product
 exports.addProduct = async (req, res) => {
-    upload.single("image")(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message });
-      }
-  
-      const { name, price, category, subcategory } = req.body;
-      try {
-        const categoryExists = await Category.findById(category);
-        if (!categoryExists)
-          return res.status(404).json({ error: "Category not found" });
-  
-        const subcategoryExists = categoryExists.subcategories.find(
-          (sub) => sub.name === subcategory
-        );
-        if (!subcategoryExists)
-          return res
-            .status(400)
-            .json({ error: "Subcategory not found in this category" });
-  
-        const newProduct = new Product({
-          name,
-          price,
-          category,
-          subcategory,
-          image: req.file ? req.file.path : null, 
-        });
-  
-        await newProduct.save();
-        res.status(201).json(newProduct);
-      } catch (error) {
-        res.status(500).json({ error: "Failed to add product" });
-      }
-    });
-  };
-  
-  
-  // Upload images
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname));
-    },
-  });
-  
-  const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-      const fileTypes = /jpeg|jpg|png/;
-      const extname = fileTypes.test(
-        path.extname(file.originalname).toLowerCase()
+  upload.single("image")(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    const { name, price, category, subcategory } = req.body;
+    try {
+
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists)
+        return res.status(404).json({ error: "Category not found" });
+
+      const subcategoryExists = categoryExists.subcategories.find(
+        (sub) => sub.name === subcategory
       );
-      const mimetype = fileTypes.test(file.mimetype);
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
-      }
-    },
+      if (!subcategoryExists)
+        return res
+          .status(400)
+          .json({ error: "Subcategory not found in this category" });
+
+      const newProduct = new Product({
+        name,
+        price,
+        category,
+        subcategory,
+        image: req.file ? req.file.path : null,
+      });
+
+      await newProduct.save();
+
+      const emailSubject = `New Product Added: ${name}`;
+      const emailText = `A new product has been added to the system.\n\nProduct Details:\nName: ${name}\nPrice: ${price}\nCategory: ${categoryExists.name}\nSubcategory: ${subcategory}\nImage: ${req.file ? req.file.path : "No image provided"}`;
+
+      await sendMail("assanamed84@gmail.com", emailSubject, emailText);
+      res.status(201).json(newProduct);
+    } catch (error) {
+      console.error("Error adding product:", error);
+      res.status(500).json({ error: "Failed to add product" });
+    }
   });
-  
+};
+
+// Upload images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /jpeg|jpg|png/;
+    const extname = fileTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimetype = fileTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
+    }
+  },
+});
   
   // Get all products
   exports.getProducts = async (req, res) => {
